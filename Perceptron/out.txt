@@ -1,0 +1,139 @@
+len(x):  6
+len(x[0]):  26
+len(w):  26
+w:  [0.49126333 0.01797143 0.15039806 0.16468172 0.1685583  0.05040999
+ 0.43721834 0.0173526  0.37333969 0.70682463 0.82743376 0.88428189
+ 0.96354768 0.46237299 0.33297666 0.23618409 0.77442241 0.57325056
+ 0.97852665 0.82227069 0.37557435 0.38186801 0.65009648 0.64751492
+ 0.12980684 0.74770968]
+ynet:  -1
+output[j]:  1
+new_w:  [ 0.69126333  0.21797143 -0.04960194 -0.03531828 -0.0314417   0.25040999
+  0.63721834 -0.1826474   0.17333969  0.50682463  1.02743376  0.68428189
+  1.16354768  0.66237299  0.53297666  0.03618409  0.57442241  0.37325056
+  1.17852665  0.62227069  0.17557435  0.18186801  0.45009648  0.84751492
+ -0.07019316  0.54770968]
+j:  0
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+ynet:  1
+output[j]:  1
+final_w:  [ 0.69126333  0.21797143 -0.04960194 -0.03531828 -0.0314417   0.25040999
+  0.63721834 -0.1826474   0.17333969  0.50682463  1.02743376  0.68428189
+  1.16354768  0.66237299  0.53297666  0.03618409  0.57442241  0.37325056
+  1.17852665  0.62227069  0.17557435  0.18186801  0.45009648  0.84751492
+ -0.07019316  0.54770968]
