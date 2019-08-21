@@ -53,7 +53,7 @@ def MLP(x, y, number_layers, number_neurons, w_input, w_output, w):
 
 def backpropagation(x, y, number_layers, number_neurons, low_weight, high_weight, learning_rate = 0.2):
   print('llegue')
-  error      = 1
+  errorMLP      = 1
   tolerancia = 0.5
   
   # Weight initialization first layer  
@@ -70,28 +70,23 @@ def backpropagation(x, y, number_layers, number_neurons, low_weight, high_weight
     w.append(w_temp)
 
 
-  error, ynet = MLP(x, y, number_layers, number_neurons, w_input, w_output, w)
-  print('error: ', error)  
-  # Calculate delta w input    
-
-  # Calculate delta w output
-  print('w_old')
-  print(w_output)
-  delta_w_output = np.around((-1 * (y[0] - ynet) * ynet * (1 - ynet) * w_output), 10)
+  errorMLP, ynet = MLP(x, y, number_layers, number_neurons, w_input, w_output, w)
+  
+  
+  # Calculate delta w output  
+# y[0]     = [1 0 0 0 0 0 0 0]
+# ynet     = [12 23 231 546 89 4 32 66]
+# w_output = [456 123 356 645 132654 897 132 321]
+  delta_w_output = -(y[0] - ynet) * ynet * (1 - ynet) * w_output
   w_output = w_output + (learning_rate * delta_w_output)
-  print('delta_w_output: ')
-  print(delta_w_output)
-  print('w_new')
-  print(w_output)
+
+  # Calculate delta w input
+  for i in range(len(y)):
+    
+  delta_w_input = 
 
 
-  print('y[0]')
-  print(y[0])
-  print('ynet')
-  print(ynet)
-  print('w_output')
-  print(w_output)
-
+  
   # while error > tolerancia:
   #   w_input, w_output, w, error, ynet = MLP(x, y, number_layers, number_neurons, w_input, w_output, w)
 
