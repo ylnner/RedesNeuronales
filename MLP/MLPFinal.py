@@ -1,25 +1,22 @@
 import numpy as np
+import sys
 import math
+import argparse
 
-x_global = np.array([[1, 0, 0, 0, 0, 0, 0, 0],
-			  [0, 1, 0, 0, 0, 0, 0, 0],
-			  [0, 0, 1, 0, 0, 0, 0, 0],
-			  [0, 0, 0, 1, 0, 0, 0, 0],
-			  [0, 0, 0, 0, 1, 0, 0, 0],
-			  [0, 0, 0, 0, 0, 1, 0, 0],
-			  [0, 0, 0, 0, 0, 0, 1, 0],
-			  [0, 0, 0, 0, 0, 0, 0, 1]])	  
-#x_global = np.array([[1, 1], [0, 0], [0, 1], [1, 0]])
-			
-y_global = np.array([[1, 0, 0, 0, 0, 0, 0, 0],
-			  [0, 1, 0, 0, 0, 0, 0, 0],
-			  [0, 0, 1, 0, 0, 0, 0, 0],
-			  [0, 0, 0, 1, 0, 0, 0, 0],
-			  [0, 0, 0, 0, 1, 0, 0, 0],
-			  [0, 0, 0, 0, 0, 1, 0, 0],
-			  [0, 0, 0, 0, 0, 0, 1, 0],
-			  [0, 0, 0, 0, 0, 0, 0, 1]])
-#y_global = [[0], [0], [1], [1]]
+global ARGS
+
+def parse_arguments():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('exercise', type=str, help='Describes the number of exercise (exercise1, exercise2, exercise3). This changes the training and label sets')
+	parser.add_argument('lowWeight', type=float, default = -1, help='Describes the low weight for initialization of parameters.')
+	parser.add_argument('highWeight', type=float, default = 1, help='Describes the high weight for initialization of parameters.')
+	parser.add_argument('numberNeuronsHidden', type=int, default = 3, help='Describes the number of neurons on the hidden layer.')
+	parser.add_argument('maxNumberOfIterations', type=int, default=500, help='Describes the max number of iterations')	
+	parser.add_argument('tol1', type=float, default = 0.01, help='Describes the tolerance for example on every element from training set.')
+	parser.add_argument('tol2', type=float, default = 0.05, help='Describes the tolerance for mean squared error.')
+	parser.add_argument('learningRate', type=float, default = 0.3, help='Describe the learningRate')
+	ARGStemp = parser.parse_args()
+	return ARGStemp
 
 def sigmoid(x):
 	out = []
@@ -31,8 +28,18 @@ def forward(x, y, w_input, w_output, wb_input, wb_output):
 
 	# Hidden Layer
 	x 			= np.append(np.array(x), 1)   # bias initialization for every example
+	print('new_x: ', x)
 	#w_current 	= np.hstack((w_input, np.atleast_2d(wb_input).T))	
 	w_current = np.concatenate((w_input, wb_input.T), axis = 1)
+	# w_current = np.concatenate((w_input, wb_input), axis = 1)
+	print('wb_input')
+	print(wb_input)
+	print('w_input')
+	print(w_input)
+	print('w_current')
+	print(w_current)
+	print('x')
+	print(x)
 	y_layer   	= sigmoid(np.dot(w_current, x))
 
 	# Output Layer
@@ -47,56 +54,30 @@ def forward(x, y, w_input, w_output, wb_input, wb_output):
 
 	return y_layer, y_net, error
 
-def backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output, learning_rate, number_iterations):
-	tol1  = 0.01
-	tol2  = 0.05
-	
-	for ni in range(number_iterations):
+def backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output):
+	global ARGS
+
+	for ni in range(ARGS.maxNumberOfIterations):
 		y_net_best = []
 		for i in range(len(x_global)):
 			error = 1
-			while error > tol1:				
+			while error > ARGS.tol1:				
 				y_layer, y_net, error = forward(x_global[i], y_global[i], w_input, w_output, wb_input, wb_output)												
 				# Calculate delta w output
 				delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)  	# vector [1 x 8]
 				delta_w_output = np.array((delta_o[np.newaxis]).T * y_layer)						# matrix [8 x 3]
 				old_w_output   = w_output
-				w_output       = w_output - (learning_rate * delta_w_output)						# matrix [8 x 3]
-				wb_output      = wb_output - (learning_rate * delta_o)								# matrix [1 x 8]
+				w_output       = w_output - (ARGS.learningRate * delta_w_output)						# matrix [8 x 3]
+				wb_output      = wb_output - (ARGS.learningRate * delta_o)								# matrix [1 x 8]
 
 				
 				# Calculate delta w input	
-				temp           = np.ones(len(y_layer)) - y_layer
-				# print('temp')
-				# print(temp)
-				# print('delta_o')
-				# print(delta_o)
-				# print('w_output')
-				# print(w_output)
-				# print('np.dot(delta_o , w_output)')
-				# print(np.dot(delta_o , w_output))
-
-
-				delta_o_hidden = (np.dot(delta_o , old_w_output) * y_layer * temp)
-				# print('delta_o_hidden')
-				# print(delta_o_hidden)
-				# print('[np.newaxis].T')
-				# print(delta_o_hidden[np.newaxis].T)
-				# print('x_global[i]')
-				# print(x_global[i])				
-				delta_w_input  = np.array(delta_o_hidden[np.newaxis].T * x_global[i])							# matrix [3 x 8]	
-				# print('delta_w_input')
-				# print(delta_w_input)
-				w_input        = w_input - (learning_rate * delta_w_input)							# matrix [3 x 8]
-				wb_input       = wb_input - (learning_rate * delta_o_hidden)						# matrix [1 x 3]	
-
-
-				# print('w_input')
-				# print(w_input)
-
-				# print('wb_input')
-				# print(wb_input)
-
+				temp           = np.ones(len(y_layer)) - y_layer				
+				delta_o_hidden = (np.dot(delta_o , old_w_output) * y_layer * temp)				
+				delta_w_input  = np.array(delta_o_hidden[np.newaxis].T * x_global[i])				# matrix [3 x 8]					
+				w_input        = w_input - (ARGS.learningRate * delta_w_input)							# matrix [3 x 8]
+				wb_input       = wb_input - (ARGS.learningRate * delta_o_hidden)						# matrix [1 x 3]	
+			
 			y_net_best.append(y_net)
 			
 					
@@ -105,7 +86,7 @@ def backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output, 
 		print(y_net_best)
 		print('mse: ', mse)
 
-		if mse < tol2:
+		if mse < ARGS.tol2:
 			print('MSE was achieved')
 			print(mse)
 			break
@@ -116,22 +97,52 @@ def backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output, 
 
 
 if __name__ == '__main__':
-	nneurons_hidden = 3
-	learning_rate   = 0.4
-	low_weight      = -1
-	high_weight     = 1
-	# Weight initialization first layer  
-	w_input         = np.random.uniform(low = low_weight, high = high_weight, size = [nneurons_hidden, len(x_global)])
-	wb_input        = np.random.uniform(low = low_weight, high = high_weight, size =  [1, nneurons_hidden])
-	# w_input        = np.array([[0.4, 0.5], [0.8,0.8]])
-	# wb_input		= np.array([[-0.6, -0.2]])
-	
-	# Weight initialization last layer  
-	w_output        = np.random.uniform(low = low_weight, high = high_weight, size = [len(y_global), nneurons_hidden])
-	wb_output       = np.random.uniform(low = low_weight, high = high_weight, size = [1, len(y_global)])
-	# w_output     = np.array([[-0.4, 0.9]])
-	# wb_output 	 = np.array([[-0.3]])
 
+	x_global = []
+	y_global = []
+	global ARGS
+	ARGS = parse_arguments()
+	if ARGS.exercise =='exercise1':
+		
+		x_global = np.array([[1, 1], [0, 0], [0, 1], [1, 0]])
+		y_global = [[0], [0], [1], [1]]
+		
+	elif ARGS.exercise =='exercise2':
+		# Size of the autoencoder
+		size = 8
+		x_global = np.identity(size)
+		y_global = np.identity(size)
+
+	elif ARGS.exercise =='exercise3':
+		# Size of the autoencoder
+		size = 15
+		x_global = np.identity(size)
+		y_global = np.identity(size)
+		
+	else:
+		sys.exit('The number of exercise is invalid.')
+
+
+	# Weight initialization first layer  
+	w_input         = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [ARGS.numberNeuronsHidden, len(x_global)])
+	wb_input        = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size =  [1, ARGS.numberNeuronsHidden])
+		
+	# Weight initialization last layer  
+	w_output        = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [len(y_global), ARGS.numberNeuronsHidden])
+	wb_output       = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [1, len(y_global)])
+
+	print('x_global')
+	print(x_global)
+	print('y_global')
+	print(y_global)
+	print('=============== INPUT ===============')
+	print('Exercise: ', ARGS.exercise)
+	print('Low Weight: ', ARGS.lowWeight)
+	print('High Weight: ', ARGS.highWeight)
+	print('Number of neurons on hidden layer: ', ARGS.numberNeuronsHidden)
+	print('Max number of iterations: ', ARGS.maxNumberOfIterations)
+	print('Tolerance 1(for example): ', ARGS.tol1)
+	print('Tolerance 2(for MSE): ', ARGS.tol2)
+	print('Learning Rate: ', ARGS.learningRate)
 	
-	number_iterations = 3000
-	backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output, learning_rate, number_iterations)		
+	backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output)	
