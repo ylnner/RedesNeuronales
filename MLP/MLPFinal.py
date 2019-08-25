@@ -28,24 +28,29 @@ def forward(x, y, w_input, w_output, wb_input, wb_output):
 
 	# Hidden Layer
 	x 			= np.append(np.array(x), 1)   # bias initialization for every example
-	print('new_x: ', x)
+	# print('new_x: ', x)
 	#w_current 	= np.hstack((w_input, np.atleast_2d(wb_input).T))	
 	w_current = np.concatenate((w_input, wb_input.T), axis = 1)
 	# w_current = np.concatenate((w_input, wb_input), axis = 1)
-	print('wb_input')
-	print(wb_input)
-	print('w_input')
-	print(w_input)
-	print('w_current')
-	print(w_current)
-	print('x')
-	print(x)
+	# print('wb_input')
+	# print(wb_input)
+	# print('w_input')
+	# print(w_input)
+	# print('w_current')
+	# print(w_current)
+	# print('x')
+	# print(x)
 	y_layer   	= sigmoid(np.dot(w_current, x))
 
 	# Output Layer
 	y_layer_bias= np.append(y_layer, 1)  # bias initialization
 	# w_current 	= np.hstack((w_output, np.atleast_2d(wb_output).T))
+	# print('miraaaaaaaaaaaaaaaaaaaa aqui: ', w_output )
+	# print('miraaaaaaaaaaaaaaaaaaaa aqui: ', wb_output )
 	w_current = np.concatenate((w_output, wb_output.T), axis = 1)
+
+	# print('w_current: ',w_current)
+	# print('y_layer_bias: ', y_layer_bias)
 
 	y_net 		= sigmoid(np.dot(w_current, y_layer_bias))
 
@@ -56,19 +61,19 @@ def forward(x, y, w_input, w_output, wb_input, wb_output):
 
 def backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output):
 	global ARGS
-
+	achieved = False
 	for ni in range(ARGS.maxNumberOfIterations):
 		y_net_best = []
 		for i in range(len(x_global)):
 			error = 1
-			while error > ARGS.tol1:				
+			while error >= ARGS.tol1:				
 				y_layer, y_net, error = forward(x_global[i], y_global[i], w_input, w_output, wb_input, wb_output)												
 				# Calculate delta w output
-				delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)  	# vector [1 x 8]
-				delta_w_output = np.array((delta_o[np.newaxis]).T * y_layer)						# matrix [8 x 3]
+				delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)  	# [1x1]    # vector [1 x 8]
+				delta_w_output = np.array((delta_o[np.newaxis]).T * y_layer)						# [1x2]    # matrix [8 x 3]
 				old_w_output   = w_output
-				w_output       = w_output - (ARGS.learningRate * delta_w_output)						# matrix [8 x 3]
-				wb_output      = wb_output - (ARGS.learningRate * delta_o)								# matrix [1 x 8]
+				w_output       = w_output - (ARGS.learningRate * delta_w_output)					# [1x2]    # matrix [8 x 3]
+				wb_output      = wb_output - (ARGS.learningRate * delta_o)							# [1x1]    # matrix [1 x 8]
 
 				
 				# Calculate delta w input	
@@ -79,18 +84,22 @@ def backpropagation(x_global, y_global, w_input, w_output, wb_input, wb_output):
 				wb_input       = wb_input - (ARGS.learningRate * delta_o_hidden)						# matrix [1 x 3]	
 			
 			y_net_best.append(y_net)
-			
+			print('alcance')
 					
-		mse = np.sum(np.subtract(np.array(y_global), np.array(y_net_best)) ** 2)
-		print('y_net_best')
-		print(y_net_best)
-		print('mse: ', mse)
-
+		mse = np.sum(np.subtract(np.array(y_global), np.array(y_net_best)) ** 2)		
+		
 		if mse < ARGS.tol2:
-			print('MSE was achieved')
-			print(mse)
+			achieved = True
+			print('MSE was achieved: ', mse)
+			print(np.array(y_net_best))
+			print('w_input')
+			print(w_input)
 			break
-				
+	
+	if achieved == False:
+		print('MSE was not achieved: ', mse)
+		print(np.array(y_net_best))
+
 	return w_input, wb_input, w_output, wb_output
 
 
@@ -105,7 +114,7 @@ if __name__ == '__main__':
 	if ARGS.exercise =='exercise1':
 		
 		x_global = np.array([[1, 1], [0, 0], [0, 1], [1, 0]])
-		y_global = [[0], [0], [1], [1]]
+		y_global = np.array([[0], [0], [1], [1]])
 		
 	elif ARGS.exercise =='exercise2':
 		# Size of the autoencoder
@@ -124,17 +133,14 @@ if __name__ == '__main__':
 
 
 	# Weight initialization first layer  
-	w_input         = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [ARGS.numberNeuronsHidden, len(x_global)])
+	w_input         = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [ARGS.numberNeuronsHidden, len(x_global[0])])
 	wb_input        = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size =  [1, ARGS.numberNeuronsHidden])
 		
 	# Weight initialization last layer  
-	w_output        = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [len(y_global), ARGS.numberNeuronsHidden])
-	wb_output       = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [1, len(y_global)])
+	w_output        = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [len(y_global[0]), ARGS.numberNeuronsHidden])
+	wb_output       = np.random.uniform(low = ARGS.lowWeight, high = ARGS.highWeight, size = [1, len(y_global[0])])
 
-	print('x_global')
-	print(x_global)
-	print('y_global')
-	print(y_global)
+	
 	print('=============== INPUT ===============')
 	print('Exercise: ', ARGS.exercise)
 	print('Low Weight: ', ARGS.lowWeight)
