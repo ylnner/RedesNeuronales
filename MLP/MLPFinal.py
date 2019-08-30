@@ -30,25 +30,25 @@ def forward(x, y, w_middle, w_output, wb_middle, wb_output):
 	input = np.array(x)
 	for w_neurons, w_bias in zip(w_middle, wb_middle):
 		input_with_bias = np.append(input, 1)
-		print('input_with_bias')
-		print(input_with_bias)
+		# print('input_with_bias')
+		# print(input_with_bias)
 
 		w_neurons       = np.array(w_neurons)
-		print('w_neurons')
-		print(w_neurons)
+		# print('w_neurons')
+		# print(w_neurons)
 
 		w_bias          = np.array(w_bias)
-		print('w_bias')
-		print(w_bias)
+		# print('w_bias')
+		# print(w_bias)
 
 		w_current       = np.concatenate((w_neurons, w_bias.T), axis = 1)
-		print('w_current')
-		print(w_current)
+		# print('w_current')
+		# print(w_current)
 
 		output          = sigmoid(np.dot(w_current, input_with_bias))
 		y_layer.append(output)
-		print('output')
-		print(output)
+		# print('output')
+		# print(output)
 
 		input           = output
 
@@ -62,8 +62,11 @@ def forward(x, y, w_middle, w_output, wb_middle, wb_output):
 	# Calculating error
 	error 		= (np.sum((y - y_net)**2))/2
 
-	print('y_layer')
+	print('y_layerrr')
 	print(np.array(y_layer))
+
+	print('y_net')
+	print(y_net)
 
 	return y_layer, y_net, error
 
@@ -71,7 +74,7 @@ def forward(x, y, w_middle, w_output, wb_middle, wb_output):
 def backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output):
 	global ARGS
 
-	y_layer, y_net, error = forward(x_global[0], y_global[0], w_middle, w_output, wb_middle, wb_output)
+	
 
 	achieved = False
 	for ni in range(ARGS.maxNumberOfIterations):
@@ -80,27 +83,40 @@ def backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output
 			error = 1
 			while error >= ARGS.tol1:				
 				y_layer, y_net, error = forward(x_global[i], y_global[i], w_middle, w_output, wb_middle, wb_output)
+				print('termino forward')
 				# Calculate delta w output
-				delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)  	# [1x1]    # vector [1 x 8]
-				delta_w_output = np.array((delta_o[np.newaxis]).T * y_layer)						# [1x2]    # matrix [8 x 3]
+
+				delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)
+				print('delta_o')
+				print(delta_o)
+				idx = len(y_layer) - 1
+				delta_w_output = np.array((delta_o[np.newaxis]).T * y_layer[idx])
 				old_w_output   = w_output
-				w_output       = w_output - (ARGS.learningRate * delta_w_output)					# [1x2]    # matrix [8 x 3]
-				wb_output      = wb_output - (ARGS.learningRate * delta_o)							# [1x1]    # matrix [1 x 8]
+				w_output       = w_output - (ARGS.learningRate * delta_w_output)
+				wb_output      = wb_output - (ARGS.learningRate * delta_o)
 
 				
-				# Calculate delta w input	
-				temp           = np.ones(len(y_layer)) - y_layer				
-				delta_o_hidden = (np.dot(delta_o , old_w_output) * y_layer * temp)				
-				delta_w_input  = np.array(delta_o_hidden[np.newaxis].T * x_global[i])				# matrix [3 x 8]					
-				w_input        = w_input - (ARGS.learningRate * delta_w_input)							# matrix [3 x 8]
-				wb_input       = wb_input - (ARGS.learningRate * delta_o_hidden)						# matrix [1 x 3]
+				# # Calculate delta w input	
+				# temp           = np.ones(len(y_layer)) - y_layer				
+				# delta_o_hidden = (np.dot(delta_o , old_w_output) * y_layer * temp)				
+				# delta_w_input  = np.array(delta_o_hidden[np.newaxis].T * x_global[i])				# matrix [3 x 8]					
+				# w_input        = w_input - (ARGS.learningRate * delta_w_input)							# matrix [3 x 8]
+				# wb_input       = wb_input - (ARGS.learningRate * delta_o_hidden)						# matrix [1 x 3]
 
 				# Calculate delta w middle
-				for idx in range(len(y_layer), 0, -1):
+				for idx in range(len(y_layer) - 1, 0, -1):
+					print('idx: ', idx)
+
 					layer           = y_layer[idx]
 					temp            = np.ones(len(layer)) - layer
 					delta_o_hidden  = (np.dot(delta_o, old_w_output) * layer * temp)
+					print('delta_o_hidden')
+					print(delta_o_hidden)
 					delta_w_current = np.array(delta_o_hidden[np.newaxis].T * x_global[i])
+					print('w_middle[idx]')
+					print(w_middle[idx])
+					print('delta_w_current')
+					print(delta_w_current)
 					w_middle[idx]   = w_middle[idx] - (ARGS.learningRate * delta_w_current)
 					wb_middle[idx]  = wb_middle[idx] - (ARGS.learningRate * delta_o_hidden)
 
@@ -156,7 +172,7 @@ if __name__ == '__main__':
 
 
 
-	neurons_on_layers = [8, 3, 1]
+	neurons_on_layers = [3, 3, 3]
 
 	#Initialization of weights
 	w_middle  = []
