@@ -89,7 +89,7 @@ def backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output
 				delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)
 				print('delta_o')
 				print(delta_o)
-				idx = len(y_layer) - 1
+				idx            = len(y_layer) - 1
 				delta_w_output = np.array((delta_o[np.newaxis]).T * y_layer[idx])
 				old_w_output   = w_output
 				w_output       = w_output - (ARGS.learningRate * delta_w_output)
@@ -102,26 +102,46 @@ def backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output
 				# delta_w_input  = np.array(delta_o_hidden[np.newaxis].T * x_global[i])				# matrix [3 x 8]					
 				# w_input        = w_input - (ARGS.learningRate * delta_w_input)							# matrix [3 x 8]
 				# wb_input       = wb_input - (ARGS.learningRate * delta_o_hidden)						# matrix [1 x 3]
+				print('len(y_layer)')
+				print(len(y_layer))
+				print('len(w_middle)')
+				print(len(w_middle))
+
+				print('y_layer')
+				print(y_layer)
+				print('w_middle')
+				print(w_middle)
+				aux_y_global = y_global[i]
 
 				# Calculate delta w middle
-				for idx in range(len(y_layer) - 1, 0, -1):
+				for idx in range(len(y_layer) - 2, 0, -1):
 					print('idx: ', idx)
+					if idx == 0:
+						print('idx global')
+						layer = x_global[i]
+					else:
+						print('idx ylayer')
+						layer = y_layer[idx]
 
-					layer           = y_layer[idx]
+					print('layer: ', layer)
+
+					# delta_o        = -(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)
+					
 					temp            = np.ones(len(layer)) - layer
 					delta_o_hidden  = (np.dot(delta_o, old_w_output) * layer * temp)
-					print('delta_o_hidden')
-					print(delta_o_hidden)
-					delta_w_current = np.array(delta_o_hidden[np.newaxis].T * x_global[i])
+					print('delta_o_hidden[np.newaxis].T')
+					print(delta_o_hidden[np.newaxis].T)					
+					# delta_w_input_current = np.array(delta_o_hidden[np.newaxis].T * x_global[i])
+					delta_w_input_current = np.array(delta_o_hidden[np.newaxis].T * layer)
 					print('w_middle[idx]')
 					print(w_middle[idx])
-					print('delta_w_current')
-					print(delta_w_current)
-					w_middle[idx]   = w_middle[idx] - (ARGS.learningRate * delta_w_current)
-					wb_middle[idx]  = wb_middle[idx] - (ARGS.learningRate * delta_o_hidden)
-
-					delta_o 		= -(y_global[i] - layer) * layer * (np.ones(len(layer)) - layer)
-					old_w_output    = w_middle[idx]
+					print('delta_w_input_current')
+					print(delta_w_input_current)
+					old_w_output    = w_middle[idx+1]
+					w_middle[idx+1]   = w_middle[idx+1] - (ARGS.learningRate * delta_w_input_current)
+					wb_middle[idx+1]  = wb_middle[idx+1] - (ARGS.learningRate * delta_o_hidden)
+					# delta_o 		= -(y_global[i] - layer) * layer * (np.ones(len(layer)) - layer)
+					
 			y_net_best.append(y_net)
 			print('alcance')
 					
