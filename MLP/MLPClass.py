@@ -1,5 +1,8 @@
-class MLPClass
-	def __init__(self, lowWeight, highWeight, neuronsOnHiddenLayer, x_global, y_global):
+import numpy as np
+import math
+
+class MLPClass:
+	def __init__(self, lowWeight, highWeight, neuronsOnHiddenLayer, size_x, size_y):
 		self.lowWeight             = lowWeight
 		self.highWeight            = highWeight
 		self.neuronsOnHiddenLayer  = neuronsOnHiddenLayer
@@ -7,7 +10,8 @@ class MLPClass
 		#Initialization of weights
 		w_middle  = []
 		wb_middle = []
-		before    = len(x_global[0])
+		# before    = len(x_global[0])
+		before    = size_x
 		for neurons in neuronsOnHiddenLayer:
 			w_temp  = np.random.uniform(low = lowWeight, high = highWeight, size = [neurons, before])
 			wb_temp = np.random.uniform(low = lowWeight, high = highWeight, size = [1, neurons])
@@ -16,97 +20,141 @@ class MLPClass
 			before  = neurons 		# At the end, before is going to have the last number of neurons of the last layer
 
 		# Weight initialization last layer  
-		w_output        = np.random.uniform(low = lowWeight, high = highWeight, size = [len(y_global[0]), before])
-		wb_output       = np.random.uniform(low = lowWeight, high = highWeight, size = [1, len(y_global[0])])
+		# w_output        = np.random.uniform(low = lowWeight, high = highWeight, size = [len(y_global[0]), before])
+		# wb_output       = np.random.uniform(low = lowWeight, high = highWeight, size = [1, len(y_global[0])])
+
+		w_output        = np.random.uniform(low = lowWeight, high = highWeight, size = [size_y, before])
+		wb_output       = np.random.uniform(low = lowWeight, high = highWeight, size = [1, size_y])
 
 		self.w_middle  = w_middle
 		self.wb_middle = wb_middle
 		self.w_output  = w_output
 		self.wb_output = wb_output
 
+	def sigmoid(self, x):
+		out = []
+		for i in range(len(x)):
+			aux = 1 / (1 + math.exp(-x[i]))			
+			out.append(aux)
+		return np.array(out)
+
+	def forward(self, x, y, w_middle, w_output, wb_middle, wb_output):
+		# Middle Layer
+		y_layer = []
+		input = np.array(x)
+		for w_neurons, w_bias in zip(w_middle, wb_middle):
+			input_with_bias = np.append(input, 1)		
+			w_neurons       = np.array(w_neurons)		
+			w_bias          = np.array(w_bias)		
+			w_current       = np.concatenate((w_neurons, w_bias.T), axis = 1)		
+			output          = self.sigmoid(np.dot(w_current, input_with_bias))
+			y_layer.append(output)		
+			input           = output
+
+				
+		# Output Layer	
+		y_layer_bias = np.append(input, 1)  # bias initialization	
+		w_current    = np.concatenate((w_output, wb_output.T), axis = 1)
+		y_net        = self.sigmoid(np.dot(w_current, y_layer_bias))
+		
+		# Calculating error
+		error        = (np.sum((y - y_net)**2))/2
+		
+		return y_layer, y_net, error
 
 	
-	def fit(self, x_global, y_global, maxNumberOfIterations, learningRate, alphaMomentum, tol1, tol2)
-		self.maxNumberOfIterations = maxNumberOfIterations
+	def fit_by_mini_batch(self, x_mini, y_mini, learningRate, alphaMomentum):
 		self.learningRate          = learningRate
-		self.alphaMomentum         = alphaMomentum
-		self.tol1                  = tol1
-		self.tol2                  = tol2
+		self.alphaMomentum         = alphaMomentum		
 
 		w_middle  = self.w_middle
 		wb_middle = self.wb_middle
 		w_output  = self.w_output
 		wb_output = self.wb_output
+		for i in range(len(w_middle)):
+			print('w_middle[' + str(i) + ']: ' + str(w_middle[i].shape))
 
-		achieved = False
-		delta_w_output_old = np.zeros_like(w_output)
-		delta_o_old        = np.zeros_like(wb_output[0])
-		print('init delta_w_output_old')
-		print(delta_w_output_old)
+		
+		print('w_output: ' + str(w_output.shape))
 
+
+		delta_w_output_old  = np.zeros_like(w_output)
+		delta_o_old         = np.zeros_like(wb_output[0])	
 		delta_w_current_old = []
 		delta_o_hidden_old  = []
 
+		batch_delta_w_output         = []
+		batch_delta_o                = []
+		batch_delta_w_middle_current = [None] * (len(w_middle))	
+		batch_delta_o_hidden         = [None] * (len(w_middle))
+
 		for w, wb in zip(w_middle, wb_middle):
-			delta_w_current_old.append(np.zeros_like(w)) 
+			delta_w_current_old.append(np.zeros_like(w))
 			delta_o_hidden_old.append(np.zeros_like(wb[0]))
 
+		for i in range(len(x_mini)):
+			# print('ENTRO ELEMENTO')
+			y_layer, y_net, error = self.forward(x_mini[i], y_mini[i], w_middle, w_output, wb_middle, wb_output)
+			delta_o            = np.array(-(y_mini[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)) + (self.alphaMomentum * delta_o_old)
+			delta_o_old        = delta_o
+			idx2               = len(y_layer) - 1
+			delta_w_output     = np.array((delta_o[np.newaxis]).T * y_layer[idx2]) + (self.alphaMomentum * delta_w_output_old)
+			delta_w_output_old = delta_w_output
+			old_w_output       = w_output
 
-		for ni in range(maxNumberOfIterations):
-			y_net_best = []
-			for i in range(len(x_global)):
-				error = 1
-				while error >= tol1:
-					
-					y_layer, y_net, error = forward(x_global[i], y_global[i], w_middle, w_output, wb_middle, wb_output)
-									
-					# Calculate delta w output
-					print('delta_o_old')
-					print(delta_o_old)
-					delta_o            = np.array(-(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)) + (alphaMomentum * delta_o_old)										
-					delta_o_old        = delta_o
-					idx2               = len(y_layer) - 1				
-					delta_w_output     = np.array((delta_o[np.newaxis]).T * y_layer[idx2]) + (alphaMomentum * delta_w_output_old)
-					delta_w_output_old = delta_w_output
-					old_w_output       = w_output				
-					w_output           = w_output - (learningRate * delta_w_output)				
-					wb_output          = wb_output - (learningRate * delta_o)
-					
-					
-					# Calculate delta w middle
-					for idx in range(len(y_layer) - 2, 0, -1):					
-						if idx == 0:
-							input     = x_global[i]
-							layer     = y_layer[idx]
-							idx_layer = idx
-						else:						
-							layer     = y_layer[idx + 1]
-							idx_layer = idx + 1
-							input     = y_layer[idx]
-									
-						temp                           = np.ones(len(layer)) - layer				
-						delta_o_hidden                 = (np.dot(delta_o, old_w_output) * layer * temp) + (alphaMomentum * delta_o_hidden_old[idx_layer])
-						delta_o_hidden_old[idx_layer]  = delta_o_hidden
-						
-						delta_w_middle_current         = np.array(delta_o_hidden[np.newaxis].T * input) + (alphaMomentum * delta_w_current_old[idx_layer])
-						delta_w_current_old[idx_layer] = delta_w_middle_current
-
-						old_w_output             = w_middle[idx+1]					
-						w_middle[idx+1]          = w_middle[idx+1] - (learningRate * delta_w_middle_current)
-						wb_middle[idx+1]         = wb_middle[idx+1] - (learningRate * delta_o_hidden)
-										
-				y_net_best.append(y_net)
-								
-			mse = np.sum(np.subtract(np.array(y_global), np.array(y_net_best)) ** 2)		
+			batch_delta_w_output.append(delta_w_output)
+			batch_delta_o.append(delta_o)
 			
-			if mse < tol2:
-				achieved = True
-				print('MSE was achieved: ', mse)
-				print(np.array(y_net_best))			
-				break
-		
-		if achieved == False:
-			print('MSE was not achieved: ', mse)
-			print(np.array(y_net_best))
+			for idx in range(len(y_layer) - 1, -1, -1):				
+				if idx == 0:					
+					input     = x_mini[i]					
+					if len(y_layer) == 1:	# Only one element						
+						layer = y_layer
+					else:							
+						layer     = y_layer[idx]						
+						# print(y_layer[idx])				
+					idx_layer = idx
+				else:										
+					layer     = y_layer[idx]						
+					idx_layer = idx 
+					input     = y_layer[idx-1]					
 
-		return w_middle, wb_middle, w_output, wb_output
+				temp                     = np.ones(len(layer)) - layer
+				delta_o_hidden           = (np.dot(delta_o, old_w_output) * layer * temp) + (self.alphaMomentum * delta_o_hidden_old[idx])
+				delta_o_hidden_old[idx]  = delta_o_hidden
+							
+				if len(y_layer) == 1:
+					delta_w_middle_current         = (delta_o_hidden.T * input) + (self.alphaMomentum * delta_w_current_old[idx])
+				else:
+					delta_w_middle_current         = (delta_o_hidden[np.newaxis].T * input) + (self.alphaMomentum * delta_w_current_old[idx])
+
+
+				delta_w_current_old[idx]          = delta_w_middle_current
+				old_w_output                      = w_middle[idx]
+				batch_delta_w_middle_current[idx] = np.array(delta_w_middle_current)
+				batch_delta_o_hidden[idx]         = np.array(delta_o_hidden)				
+				delta_o                           = delta_o_hidden
+
+		
+		batch_delta_w_output         = np.array(batch_delta_w_output)
+		batch_delta_o                = np.array(batch_delta_o)
+		geral_delta_w_output         = np.sum(batch_delta_w_output, axis = 0)
+		geral_delta_o                = np.sum(batch_delta_o, axis = 0)
+		# print('batch_delta_w_middle_current')
+		# print(batch_delta_w_middle_current)
+		geral_delta_w_middle_current = batch_delta_w_middle_current
+		geral_delta_o_hidden         = batch_delta_o_hidden
+
+		
+		len_batch = len(x_mini)
+		print('len_batch: ')
+		print(len_batch)
+		w_output  = w_output - (self.learningRate * geral_delta_w_output)
+		wb_output = wb_output - (self.learningRate * geral_delta_o)
+		idx       = 0
+		for current_w_middle, current_o_hidden in zip(geral_delta_w_middle_current, geral_delta_o_hidden):				
+			w_middle[idx]  = w_middle[idx] - ((self.learningRate / len_batch)* current_w_middle)
+			wb_middle[idx] = wb_middle[idx] - ((self.learningRate / len_batch) * current_o_hidden)
+			idx = idx +1
+		
+		return w_middle, w_output, wb_middle, wb_output
