@@ -100,14 +100,14 @@ def proccess_mini_batch(x_mini, y_mini, w_middle, w_output, wb_middle, wb_output
 
 	batch_delta_w_output         = []
 	batch_delta_o                = []
-	batch_delta_w_middle_current = []
-	batch_delta_o_hidden         = []
+	batch_delta_w_middle_current = [None] * (len(w_middle))	
+	batch_delta_o_hidden         = [None] * (len(w_middle))
 	for w, wb in zip(w_middle, wb_middle):
 		delta_w_current_old.append(np.zeros_like(w))
 		delta_o_hidden_old.append(np.zeros_like(wb[0]))
 
 	for i in range(len(x_mini)):
-		print('ENTRO ELEMENTO')
+		# print('ENTRO ELEMENTO')
 		y_layer, y_net, error = forward(x_mini[i], y_mini[i], w_middle, w_output, wb_middle, wb_output)
 		delta_o            = np.array(-(y_global[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)) + (ARGS.alphaMomentum * delta_o_old)
 		delta_o_old        = delta_o
@@ -123,61 +123,165 @@ def proccess_mini_batch(x_mini, y_mini, w_middle, w_output, wb_middle, wb_output
 		# wb_output          = wb_output - (ARGS.learningRate * delta_o)
 
 		# Calculate delta w middle
-		for idx in range(len(y_layer) - 2, 0, -1):
-
+		# print("len(y_layer)")
+		# print(len(y_layer))
+		# print("len(y_layer)")
+		# print(len(y_layer))
+		for idx in range(len(y_layer) - 1, -1, -1):
+			# print("EMPECE FOR")
+			# print("idx: ", idx)
 			if idx == 0:
+				# print('aqui idx = 0')
 				input     = x_mini[i]
-				layer     = y_layer[idx]
+				
+				if len(y_layer) == 1:	# Only one element
+					# print("AQUI si")
+					layer = y_layer
+				else:	
+					# print("AQUI no")
+					layer     = y_layer[idx]
+					# print("y_layer")
+					print(y_layer[idx])
+
+				# layer     = y_layer[idx]
 				idx_layer = idx
-			else:						
-				layer     = y_layer[idx + 1]
-				idx_layer = idx + 1
-				input     = y_layer[idx]
-						
-			temp                           = np.ones(len(layer)) - layer				
-			delta_o_hidden                 = (np.dot(delta_o, old_w_output) * layer * temp) + (ARGS.alphaMomentum * delta_o_hidden_old[idx_layer])
-			delta_o_hidden_old[idx_layer]  = delta_o_hidden
+			else:					
+				# print('aqui else')	
+				layer     = y_layer[idx]						
+				idx_layer = idx 
+				input     = y_layer[idx-1]					
+
+			temp                           = np.ones(len(layer)) - layer
+			# print("input")									
+			# print(input)
+			# print("layer")
+			# print(layer)
+			# print('================================================')
+			# print('idx: ', idx)	
+			# print('delta_o')
+			# print(delta_o.shape)
+# 
+			# print('old_w_output')
+			# print(old_w_output.shape)
+
+			# print('layer')
+			# print(layer.shape)
+
+			# print('temp')
+			# print(temp.shape)
+
+			# print('delta_o_hidden_old')
+			# print('idx_layer: ', idx_layer)
+			# print(delta_o_hidden_old[idx].shape)
+
+			# print("AQUI")
+
+			# print('================================================')
+													
+			# print('old_w_output')
+			# # print(old_w_output)
+			# print("uno")
+			# print(np.dot(delta_o, old_w_output))
+
+			# print("dos")
+			# print(np.dot(delta_o, old_w_output) * layer)
+
+			# print("tres")
+			# print((np.dot(delta_o, old_w_output) * layer * temp))
+
+			# print("cuatro")
+			# print( delta_o_hidden_old[idx])
+
+			delta_o_hidden                 = (np.dot(delta_o, old_w_output) * layer * temp) + (ARGS.alphaMomentum * delta_o_hidden_old[idx])
+			delta_o_hidden_old[idx]  = delta_o_hidden
+
+			# print("delta_o_hidden")
+			# print(delta_o_hidden.shape)
 			
-			delta_w_middle_current         = np.array(delta_o_hidden[np.newaxis].T * input) + (ARGS.alphaMomentum * delta_w_current_old[idx_layer])
-			delta_w_current_old[idx_layer] = delta_w_middle_current
+			# print("ANTES delta_w_current_old[idx]")
+			# print(delta_w_current_old[idx])
+			# print("ARGS.alphaMomentum * delta_w_current_old[idx]")
+			# print(ARGS.alphaMomentum * delta_w_current_old[idx])
 
-			old_w_output             = w_middle[idx+1]
-			print('delta_w_middle_current INSIDE')
-			print(delta_w_middle_current)
-			print('idx +1: ')
-			print(idx + 1)
-			print('batch_delta_w_middle_current')
-			print(batch_delta_w_middle_current)
+			# print("delta_o_hidden[np.newaxis].T")
+			# print(delta_o_hidden.T * input)
+			
 
-			batch_delta_w_middle_current.insert(idx+1, delta_w_middle_current)
-			batch_delta_o_hidden.insert(idx+1, delta_o_hidden)
-			# w_middle[idx+1]          = w_middle[idx+1] - (ARGS.learningRate * delta_w_middle_current)
-			# wb_middle[idx+1]         = wb_middle[idx+1] - (ARGS.learningRate * delta_o_hidden)
+			if len(y_layer) == 1:
+				delta_w_middle_current         = (delta_o_hidden.T * input) + (ARGS.alphaMomentum * delta_w_current_old[idx])
+			else:
+				delta_w_middle_current         = (delta_o_hidden[np.newaxis].T * input) + (ARGS.alphaMomentum * delta_w_current_old[idx])
+			delta_w_current_old[idx] = delta_w_middle_current
+			# print("delta_w_middle_current INSIDE")
+			# print(delta_w_middle_current)
+			
+
+			# print("idx: ", idx)
+			# print('delta_w_middle_current INSIDE')
+			# print(delta_w_middle_current)
+
+			old_w_output             = w_middle[idx]
+			# print('delta_w_middle_current INSIDE')
+			# print(delta_w_middle_current)
+			# w_middle[idx]          = w_middle[idx] - (ARGS.learningRate * delta_w_middle_current)
+			# wb_middle[idx]         = wb_middle[idx] - (ARGS.learningRate * delta_o_hidden)
+			batch_delta_w_middle_current[idx] = np.array(delta_w_middle_current)
+			batch_delta_o_hidden[idx]         = np.array(delta_o_hidden)
+			# print("idx: ", idx)				
+			# print("ITEM A INSERTAR")
+			# print(delta_o_hidden)
+			# print("batch_delta_o_hidden")
+			# print(batch_delta_o_hidden)
+
+			# try :			
+			# 	batch_delta_o_hidden[idx] = delta_o_hidden
+			# except:	
+			# 	batch_delta_o_hidden.insert(idx, delta_o_hidden)
 
 
+			# try:
+			# 	batch_delta_w_middle_current[idx] += delta_w_middle_current
+			# except:
+			# 	print("idx: ", idx)				
+			# 	print("ITEM A INSERTAR")
+			# 	print(delta_w_middle_current)
+			# 	batch_delta_w_middle_current[idx]= np.array(delta_w_middle_current)
+			# 	print("batch_delta_w_middle_current")
+			# 	print(batch_delta_w_middle_current)
+
+			delta_o = delta_o_hidden
+
+	# print("Sali")
 	batch_delta_w_output         = np.array(batch_delta_w_output)
 	batch_delta_o                = np.array(batch_delta_o)
-	batch_delta_w_middle_current = np.array(batch_delta_w_middle_current)
-	batch_delta_o_hidden         = np.array(batch_delta_o_hidden)
+	# batch_delta_w_middle_current = np.array(batch_delta_w_middle_current)
+	# batch_delta_o_hidden         = np.array(batch_delta_o_hidden)
+
+	# print("batch_delta_w_middle_current")
+	# print(batch_delta_w_middle_current)
+
+	# print("batch_delta_o_hidden")
+	# print(batch_delta_o_hidden)
 
 	geral_delta_w_output         = np.sum(batch_delta_w_output, axis = 0)
 	geral_delta_o                = np.sum(batch_delta_o, axis = 0)
-	geral_delta_w_middle_current = np.zeros_like(batch_delta_w_middle_current[0])
-	geral_delta_o_hidden         = np.zeros_like(batch_delta_o_hidden[0])
+
+	# print("OLD batch_delta_w_middle_current")
+	# print(batch_delta_w_middle_current)
+	geral_delta_w_middle_current = np.array(batch_delta_w_middle_current)
+	geral_delta_o_hidden         = np.array(batch_delta_o_hidden)
 
 	# update weights	
-	for current_w_middle, current_o_hidden in zip(batch_delta_w_middle_current, batch_delta_o_hidden):
-		geral_delta_o_hidden         = geral_delta_o_hidden + current_o_hidden
-		geral_delta_w_middle_current = geral_delta_w_middle_current + current_w_middle
+	# for current_w_middle, current_o_hidden in zip(batch_delta_w_middle_current, batch_delta_o_hidden):
+		# geral_delta_o_hidden         = geral_delta_o_hidden + current_o_hidden
+		# geral_delta_w_middle_current = geral_delta_w_middle_current + current_w_middle
 
-	geral_delta_w_middle_current = np.array(geral_delta_w_middle_current)
-	geral_delta_o_hidden         = np.array(geral_delta_o_hidden)
+	# geral_delta_w_middle_current = np.array(geral_delta_w_middle_current)
+	# geral_delta_o_hidden         = np.array(geral_delta_o_hidden)
 
-	print('batch_delta_w_middle_current')
-	print(batch_delta_w_middle_current)
-	print(len(batch_delta_w_middle_current))
-	print('geral')
-	print(geral_delta_w_middle_current)
+	
+	# print('geral_delta_w_middle_current')
+	# print(geral_delta_w_middle_current)
 
 	# print('batch_delta_o_hidden')
 	# print(batch_delta_o_hidden)
@@ -190,16 +294,18 @@ def proccess_mini_batch(x_mini, y_mini, w_middle, w_output, wb_middle, wb_output
 	wb_output = wb_output - (ARGS.learningRate * geral_delta_o)
 	idx       = 0
 	for current_w_middle, current_o_hidden in zip(geral_delta_w_middle_current, geral_delta_o_hidden):
-		print('w_middle[idx]')
-		print(w_middle[idx])
-		aux = ((ARGS.learningRate / len_batch)* current_w_middle)
-		print('aux')
-		print(aux)
-		print('current_w_middle')
-		print(current_w_middle)
+		# print("ACTUALICE")
+		# print("idx: ", idx)
+		# print('w_middle[idx]')
+		# print(w_middle[idx])
+		# aux = ((ARGS.learningRate / len_batch)* current_w_middle)
+		# print('aux')
+		# print(aux)
+		# print('current_w_middle')
+		# print(current_w_middle)		
 		w_middle[idx]  = w_middle[idx] - ((ARGS.learningRate / len_batch)* current_w_middle)
 		wb_middle[idx] = wb_middle[idx] - ((ARGS.learningRate / len_batch) * current_o_hidden)
-		++idx
+		idx = idx +1
 
 	print('w_middle')
 	print(w_middle)
@@ -295,21 +401,7 @@ def backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output
 					print(delta_o_hidden_old[idx_layer].shape)
 
 					print('================================================')
-
-
-
-					def backward(self, X, y, output):
-				        #backward propogate through the network
-				        self.output_error = y - output # error in output
-				        self.output_delta = self.output_error * self.sigmoid(output, deriv=True)
-				        
-				        self.z2_error = self.output_delta.dot(self.W2.T) #z2 error: how much our hidden layer weights contribute to output error
-				        self.z2_delta = self.z2_error * self.sigmoid(self.z2, deriv=True) #applying derivative of sigmoid to z2 error
-				        
-				        self.W1 += X.T.dot(self.z2_delta) # adjusting first set (input -> hidden) weights
-				        self.W2 += self.z2.T.dot(self.output_delta) # adjusting second set (hidden -> output) weights
-								
-					
+															
 					# print('old_w_output')
 					# print(old_w_output)
 					delta_o_hidden                 = (np.dot(delta_o, old_w_output) * layer * temp) + (ARGS.alphaMomentum * delta_o_hidden_old[idx_layer])
@@ -326,6 +418,8 @@ def backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output
 					# print(old_w_output.shape)
 					w_middle[idx]          = w_middle[idx] - (ARGS.learningRate * delta_w_middle_current)
 					wb_middle[idx]         = wb_middle[idx] - (ARGS.learningRate * delta_o_hidden)
+
+					delta_o = delta_o_hidden
 
 					# old_w_output             = w_middle[idx]					
 					# w_middle[idx]          = w_middle[idx] - (ARGS.learningRate * delta_w_middle_current)
@@ -415,6 +509,6 @@ if __name__ == '__main__':
 	print('Learning Rate: ', ARGS.learningRate)
 	print('Alpha momentum: ', ARGS.alphaMomentum)
 	
-	backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output)
+	# backpropagation(x_global, y_global, w_middle, w_output, wb_middle, wb_output)
 	print('empece proccess_mini_batch')
-	# proccess_mini_batch(x_global, x_global, w_middle, w_output, wb_middle, wb_output)
+	proccess_mini_batch(x_global, x_global, w_middle, w_output, wb_middle, wb_output)
