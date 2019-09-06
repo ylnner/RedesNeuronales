@@ -2,10 +2,11 @@ import numpy as np
 import math
 
 class MLPClass:
-	def __init__(self, lowWeight, highWeight, neuronsOnHiddenLayer, size_x, size_y):
+	def __init__(self, lowWeight, highWeight, neuronsOnHiddenLayer, size_x, size_y, task = 'Classification'):
 		self.lowWeight             = lowWeight
 		self.highWeight            = highWeight
 		self.neuronsOnHiddenLayer  = neuronsOnHiddenLayer
+		self.task 				   = task
 
 		#Initialization of weights
 		w_middle  = []
@@ -32,6 +33,7 @@ class MLPClass:
 		self.wb_output = wb_output
 
 	def sigmoid(self, x):
+		# print('x: ', x)
 		out = []
 		for i in range(len(x)):
 			aux = 1 / (1 + math.exp(-x[i]))			
@@ -42,23 +44,43 @@ class MLPClass:
 		# Middle Layer
 		y_layer = []
 		input = np.array(x)
+		idx = 0
 		for w_neurons, w_bias in zip(w_middle, wb_middle):
+			# print('idx: ', idx)
 			input_with_bias = np.append(input, 1)		
 			w_neurons       = np.array(w_neurons)		
 			w_bias          = np.array(w_bias)		
-			w_current       = np.concatenate((w_neurons, w_bias.T), axis = 1)		
+			w_current       = np.concatenate((w_neurons, w_bias.T), axis = 1)
+			# print('input: ', input)
+			# print('w_current: ')
+			# print(w_current)
 			output          = self.sigmoid(np.dot(w_current, input_with_bias))
 			y_layer.append(output)		
 			input           = output
+			idx = idx + 1
 
 				
 		# Output Layer	
 		y_layer_bias = np.append(input, 1)  # bias initialization	
 		w_current    = np.concatenate((w_output, wb_output.T), axis = 1)
-		y_net        = self.sigmoid(np.dot(w_current, y_layer_bias))
+
+		# print('wb_output')
+		# print(wb_output)
+		# aux        = self.sigmoid(np.dot(w_current, y_layer_bias))
+		# print('aux: ', aux)
+		# print('y: ', y)
 		
+		if self.task == 'Classification':
+			y_net 		 = self.sigmoid(np.dot(w_current, y_layer_bias))
+		else: 			
+			y_net 		 = self.sigmoid(np.dot(w_current, y_layer_bias))
+			# y_net 		 = np.dot(w_current, y_layer_bias)
+		# print('y_net: ', y_net)
+
+		# print('y_net: ', y_net)
+		# 
 		# Calculating error
-		error        = (np.sum((y - y_net)**2))/2
+		error        = (np.sum((y - y_net)**2))/len(y_net)
 		
 		return y_layer, y_net, error
 
@@ -71,12 +93,6 @@ class MLPClass:
 		wb_middle = self.wb_middle
 		w_output  = self.w_output
 		wb_output = self.wb_output
-		for i in range(len(w_middle)):
-			print('w_middle[' + str(i) + ']: ' + str(w_middle[i].shape))
-
-		
-		print('w_output: ' + str(w_output.shape))
-
 
 		delta_w_output_old  = np.zeros_like(w_output)
 		delta_o_old         = np.zeros_like(wb_output[0])	
@@ -103,7 +119,13 @@ class MLPClass:
 			old_w_output       = w_output
 
 			batch_delta_w_output.append(delta_w_output)
+			# print('delta_w_output')
+			# print(delta_w_output)
+
 			batch_delta_o.append(delta_o)
+
+			# print('delta_o')
+			# print(delta_o)
 			
 			for idx in range(len(y_layer) - 1, -1, -1):				
 				if idx == 0:					
@@ -131,7 +153,10 @@ class MLPClass:
 
 				delta_w_current_old[idx]          = delta_w_middle_current
 				old_w_output                      = w_middle[idx]
-				batch_delta_w_middle_current[idx] = np.array(delta_w_middle_current)
+				try:
+					batch_delta_w_middle_current[idx] = batch_delta_w_middle_current[idx] + np.array(delta_w_middle_current)					
+				except: 
+					batch_delta_w_middle_current[idx] = np.array(delta_w_middle_current)
 				batch_delta_o_hidden[idx]         = np.array(delta_o_hidden)				
 				delta_o                           = delta_o_hidden
 
@@ -139,22 +164,32 @@ class MLPClass:
 		batch_delta_w_output         = np.array(batch_delta_w_output)
 		batch_delta_o                = np.array(batch_delta_o)
 		geral_delta_w_output         = np.sum(batch_delta_w_output, axis = 0)
+		# print('geral_delta_w_output')
+		# print(geral_delta_w_output)
 		geral_delta_o                = np.sum(batch_delta_o, axis = 0)
+		# print('geral_delta_o')
+		# print(geral_delta_o)
 		# print('batch_delta_w_middle_current')
 		# print(batch_delta_w_middle_current)
 		geral_delta_w_middle_current = batch_delta_w_middle_current
 		geral_delta_o_hidden         = batch_delta_o_hidden
 
 		
-		len_batch = len(x_mini)
-		print('len_batch: ')
-		print(len_batch)
-		w_output  = w_output - (self.learningRate * geral_delta_w_output)
-		wb_output = wb_output - (self.learningRate * geral_delta_o)
+		len_batch = len(x_mini)		
+		w_output  = w_output - ((self.learningRate/ len_batch) * geral_delta_w_output)
+		wb_output = wb_output - ((self.learningRate/ len_batch) * geral_delta_o)
 		idx       = 0
 		for current_w_middle, current_o_hidden in zip(geral_delta_w_middle_current, geral_delta_o_hidden):				
 			w_middle[idx]  = w_middle[idx] - ((self.learningRate / len_batch)* current_w_middle)
 			wb_middle[idx] = wb_middle[idx] - ((self.learningRate / len_batch) * current_o_hidden)
 			idx = idx +1
+
+		self.w_output = w_output
+		self.w_middle = w_middle
+		self.wb_middle = wb_middle
+		self.wb_output = wb_output
 		
 		return w_middle, w_output, wb_middle, wb_output
+
+	def getWOutput(self):
+		return self.w_output
