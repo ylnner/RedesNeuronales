@@ -2,11 +2,10 @@ import numpy as np
 import math
 
 class MLPClass:
-	def __init__(self, lowWeight, highWeight, neuronsOnHiddenLayer, size_x, size_y, task = 'Classification'):
+	def __init__(self, lowWeight, highWeight, neuronsOnHiddenLayer, size_x, size_y):
 		self.lowWeight             = lowWeight
 		self.highWeight            = highWeight
-		self.neuronsOnHiddenLayer  = neuronsOnHiddenLayer
-		self.task 				   = task
+		self.neuronsOnHiddenLayer  = neuronsOnHiddenLayer		
 
 		#Initialization of weights
 		w_middle  = []
@@ -20,10 +19,7 @@ class MLPClass:
 			wb_middle.append(wb_temp)
 			before  = neurons 		# At the end, before is going to have the last number of neurons of the last layer
 
-		# Weight initialization last layer  
-		# w_output        = np.random.uniform(low = lowWeight, high = highWeight, size = [len(y_global[0]), before])
-		# wb_output       = np.random.uniform(low = lowWeight, high = highWeight, size = [1, len(y_global[0])])
-
+		# Weight initialization last layer  		
 		w_output        = np.random.uniform(low = lowWeight, high = highWeight, size = [size_y, before])
 		wb_output       = np.random.uniform(low = lowWeight, high = highWeight, size = [1, size_y])
 
@@ -32,28 +28,38 @@ class MLPClass:
 		self.w_output  = w_output
 		self.wb_output = wb_output
 
-	def sigmoid(self, x):
+	def sigmoid(self, x):		
+		
+		return (1 /(1+ np.exp(-x)))
+		# if x < 0:
+		# 	return 1 - 1/(1 + np.exp(x))
+		# else:
+		# 	return 1 /(1+ np.exp(-x))
+
+
 		# print('x: ', x)
-		out = []
-		for i in range(len(x)):
-			aux = 1 / (1 + math.exp(-x[i]))			
-			out.append(aux)
-		return np.array(out)
+		# out = []
+		# for i in range(len(x)):
+		# 	aux = 1 / (1 + math.exp(-x[i]))			
+		# 	out.append(aux)
+		# return np.array(out)
+
+		# def sigmoid(gamma):
+  # if gamma < 0:
+  #   return 1 - 1/(1 + math.exp(gamma))
+  # else:
+  #   return 1/(1 + math.exp(-gamma))
 
 	def forward(self, x, y, w_middle, w_output, wb_middle, wb_output):
 		# Middle Layer
 		y_layer = []
 		input = np.array(x)
 		idx = 0
-		for w_neurons, w_bias in zip(w_middle, wb_middle):
-			# print('idx: ', idx)
+		for w_neurons, w_bias in zip(w_middle, wb_middle):			
 			input_with_bias = np.append(input, 1)		
 			w_neurons       = np.array(w_neurons)		
 			w_bias          = np.array(w_bias)		
-			w_current       = np.concatenate((w_neurons, w_bias.T), axis = 1)
-			# print('input: ', input)
-			# print('w_current: ')
-			# print(w_current)
+			w_current       = np.concatenate((w_neurons, w_bias.T), axis = 1)			
 			output          = self.sigmoid(np.dot(w_current, input_with_bias))
 			y_layer.append(output)		
 			input           = output
@@ -62,23 +68,9 @@ class MLPClass:
 				
 		# Output Layer	
 		y_layer_bias = np.append(input, 1)  # bias initialization	
-		w_current    = np.concatenate((w_output, wb_output.T), axis = 1)
+		w_current    = np.concatenate((w_output, wb_output.T), axis = 1)		
+		y_net 		 = self.sigmoid(np.dot(w_current, y_layer_bias))
 
-		# print('wb_output')
-		# print(wb_output)
-		# aux        = self.sigmoid(np.dot(w_current, y_layer_bias))
-		# print('aux: ', aux)
-		# print('y: ', y)
-		
-		if self.task == 'Classification':
-			y_net 		 = self.sigmoid(np.dot(w_current, y_layer_bias))
-		else: 			
-			y_net 		 = self.sigmoid(np.dot(w_current, y_layer_bias))
-			# y_net 		 = np.dot(w_current, y_layer_bias)
-		# print('y_net: ', y_net)
-
-		# print('y_net: ', y_net)
-		# 
 		# Calculating error
 		error        = (np.sum((y - y_net)**2))/len(y_net)
 		
@@ -108,8 +100,7 @@ class MLPClass:
 			delta_w_current_old.append(np.zeros_like(w))
 			delta_o_hidden_old.append(np.zeros_like(wb[0]))
 
-		for i in range(len(x_mini)):
-			# print('ENTRO ELEMENTO')
+		for i in range(len(x_mini)):			
 			y_layer, y_net, error = self.forward(x_mini[i], y_mini[i], w_middle, w_output, wb_middle, wb_output)
 			delta_o            = np.array(-(y_mini[i] - y_net) * y_net * (np.ones(len(y_net)) - y_net)) + (self.alphaMomentum * delta_o_old)
 			delta_o_old        = delta_o
@@ -118,14 +109,8 @@ class MLPClass:
 			delta_w_output_old = delta_w_output
 			old_w_output       = w_output
 
-			batch_delta_w_output.append(delta_w_output)
-			# print('delta_w_output')
-			# print(delta_w_output)
-
-			batch_delta_o.append(delta_o)
-
-			# print('delta_o')
-			# print(delta_o)
+			batch_delta_w_output.append(delta_w_output)			
+			batch_delta_o.append(delta_o)		
 			
 			for idx in range(len(y_layer) - 1, -1, -1):				
 				if idx == 0:					
@@ -133,9 +118,9 @@ class MLPClass:
 					if len(y_layer) == 1:	# Only one element						
 						layer = y_layer
 					else:							
-						layer     = y_layer[idx]						
-						# print(y_layer[idx])				
+						layer     = y_layer[idx]								
 					idx_layer = idx
+
 				else:										
 					layer     = y_layer[idx]						
 					idx_layer = idx 
@@ -163,14 +148,8 @@ class MLPClass:
 		
 		batch_delta_w_output         = np.array(batch_delta_w_output)
 		batch_delta_o                = np.array(batch_delta_o)
-		geral_delta_w_output         = np.sum(batch_delta_w_output, axis = 0)
-		# print('geral_delta_w_output')
-		# print(geral_delta_w_output)
-		geral_delta_o                = np.sum(batch_delta_o, axis = 0)
-		# print('geral_delta_o')
-		# print(geral_delta_o)
-		# print('batch_delta_w_middle_current')
-		# print(batch_delta_w_middle_current)
+		geral_delta_w_output         = np.sum(batch_delta_w_output, axis = 0)				
+		geral_delta_o                = np.sum(batch_delta_o, axis = 0)		
 		geral_delta_w_middle_current = batch_delta_w_middle_current
 		geral_delta_o_hidden         = batch_delta_o_hidden
 
@@ -189,7 +168,4 @@ class MLPClass:
 		self.wb_middle = wb_middle
 		self.wb_output = wb_output
 		
-		return w_middle, w_output, wb_middle, wb_output
-
-	def getWOutput(self):
-		return self.w_output
+		return w_middle, w_output, wb_middle, wb_output	

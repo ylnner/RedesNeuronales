@@ -129,11 +129,7 @@ def preprocess_dataset(name_dataset):
 		# PREPROCESSING
 		# Outliers Treatment
 		Outliers, data_Predictive_1 = Outliers_Treatment(Predictive_1)
-		data_Predictive_1           = np.array(data_Predictive_1)		 
-		# Standardize the data attributes
-		#std_data_1 = preprocessing.normalize(data_Predictive_1)
-
-				# The number of classes that has dataset wine
+		data_Predictive_1           = np.array(data_Predictive_1)		 		
 		return np.array(data_Predictive_1.T), np.array(new_data_Target_1), data_Target_1
 
 	elif name_dataset == 'tracks':
@@ -144,145 +140,60 @@ def preprocess_dataset(name_dataset):
 		min_max_scaler = preprocessing.MinMaxScaler()
 		x_scaled = min_max_scaler.fit_transform(x)
 		data_2 = pd.DataFrame(x_scaled)
-
-		# print(data_2)
-
+		
 		# # Defining predictive and target attributes
 		Predictive_2  = data_2.drop([68,69], axis = 1)
 		data_Target_2 = data_2.iloc[:, [68,69]]
 
-
-		# Create x, where x the 'scores' column's values as floats
-		# std_data_2 = []
-
-	
 		# PREPROCESSING
 		# Outliers Treatment
 		Outliers, data_Predictive_2 = Outliers_Treatment(Predictive_2)
-		data_Predictive_2 = np.array(data_Predictive_2)
-		# Standardize the data attributes
-		# std_data_2 = preprocessing.normalize(data_Predictive_2)
-		# data_Target_2 = preprocessing.normalize(data_Target_2)
-		 # The number of class that has tracks dataset
+		data_Predictive_2 = np.array(data_Predictive_2)		
 		return np.array(data_Predictive_2.T), np.array(data_Target_2)
 	else:
 		sys.exit('The name of dataset is invalid.')
 
-def split_dataset(data, target, old_target = []):
-	# X = np.array([[1, 3], [3, 7], [2, 4], [4, 8]])
-	# y = np.array([0, 1, 0, 1])
-	
-	stratSplit = StratifiedShuffleSplit(n_splits=1, test_size=0.8, random_state=42)
-	for test_idx, train_idx in stratSplit.split(data, target):
-		data_train   = data[train_idx]
-		target_train = target[train_idx]
+def split_dataset(data, target, old_target = []):	
+	global ARGS
 
-		data_test = data[test_idx]
-		target_test = target[test_idx]
+	if ARGS.dataset == 'wine':
+		stratSplit = StratifiedShuffleSplit(n_splits=1, test_size=0.8, random_state=42)
+		for test_idx, train_idx in stratSplit.split(data, target):
+			data_train   = data[train_idx]
+			target_train = target[train_idx]
 
-		if len(old_target) != 0:
-			old_target_test = old_target[test_idx]
-			# print('data_train')
-			# print(len(data_train))
+			data_test = data[test_idx]
+			target_test = target[test_idx]
 
-			# print('data_test')
-			# print(len(data_test))
+			if len(old_target) != 0:
+				old_target_test = old_target[test_idx]				
+				return data_train, data_test, target_train, target_test, old_target_test
 
-			# print('target_train')
-			# print(len(target_train))
-
-			# print('target_test')
-			# print(len(target_test))
-			return data_train, data_test, target_train, target_test, old_target_test
-
+			return data_train, data_test, target_train, target_test
+	else:
+		size_train = int(np.ceil(len(data)*0.8))
+		
+		try:
+			target_train = target[0:size_train, :]
+			target_test  = target[size_train:, :]
+		except:
+			target_train = target[0:size_train]
+			target_test  = target[size_train:]
+		
+		data_train   = data[0:size_train,:]	
+		data_test    = data[size_train:,:]
+					
 		return data_train, data_test, target_train, target_test
-
-
-
-	# size_train = int(np.ceil(len(data)*0.8))
-	# print('size_train')
-	# print(size_train)
-
-	# try:
-	# 	target_train = target[0:size_train, :]
-	# 	target_test  = target[size_train:, :]
-	# except:
-	# 	target_train = target[0:size_train]
-	# 	target_test  = target[size_train:]
-	
-	# data_train   = data[0:size_train,:]	
-	# data_test    = data[size_train:,:]
-	
-	# if len(old_target) != 0:
-	# 	old_target_test = old_target[size_train:]
-	# 	return data_train, data_test, target_train, target_test, old_target_test
-	
-	# return data_train, data_test, target_train, target_test
-
-def save_value(x,y):
-	if y == 0:
-		return 0
-	return x / y
-
-# Multiclass Confusion Matrix
-# Entries:
-# y_true: true values of the classification
-# y_predict: predict values of the classification
-# C: quantity of classes 
-
-# Making confuxion matrix
-def MultiClassConfusionMatrix(y_true,y_pred):
-
-	C           = np.unique(y_true)
-	CM          = confusion_matrix(y_true, y_pred)     # Matriz de confusion general 
-	print('C')
-	print(C)
-	print('CM')
-	print(CM)
-	D = len(C)
-	accuracy    = np.zeros(D)
-	precision   = np.zeros(D)
-	recall      = np.zeros(D)
-	specificity = np.zeros(D)
-	
-	for i in range(D):
-		atributo = C[i]
-		row_i    = CM[i,:]
-		col_i    = CM[:,i]
-		
-		row_i_without_i = np.delete(row_i,i,0)
-		col_i_without_i = np.delete(col_i,i,0)
-		del_row_i       = np.delete(CM,i,0)
-		del_col_i       = np.delete(del_row_i,i,1)
-		
-		TP = CM[i,i]
-		FN = np.sum(row_i_without_i)
-		FP = np.sum(col_i_without_i)
-		TN = np.sum(del_col_i)
-	   
-		CM_new = [[TN,FP],[FN,TP]]
-		CM_new = np.array(CM_new) 
-		print('confusion matrix:', CM_new)
-
-		div1 = TP+TN+FP+FN
-		div2 = TP+FP
-		div3 = TP+FN
-		div4 = TN+FP
-		
-		accuracy[i]    = save_value((TP+TN),div1)
-	return accuracy
-
-
 
 if __name__ == '__main__':
 	
-	global ARGS
-	# print('Processing arguments...')
+	global ARGS	
+	print('Processing arguments...')
 	ARGS                      = parse_arguments()
 	neuronsOnHiddenLayer      = [int(strDim) for strDim in ARGS.neuronsOnHiddenLayer[1:-1].split(',')]
 	ARGS.neuronsOnHiddenLayer = neuronsOnHiddenLayer
 
-	# print('Preprocessing dataset selected...')
+	print('Preprocessing dataset selected...')
 	
 	if ARGS.dataset == 'wine':
 		data, target, old_target = preprocess_dataset(ARGS.dataset)
@@ -291,10 +202,8 @@ if __name__ == '__main__':
 		data, target = preprocess_dataset(ARGS.dataset)
 		data_train, data_test, target_train, target_test = split_dataset(np.array(data), np.array(target))
 
-	# print('Splitting into training and testing...')
-	
-
-	# print('Getting mini-batches')
+	print('Splitting into training and testing...')	
+	print('Getting mini-batches...')
 	mini_batches  = getMiniBatches(data_train, target_train, ARGS.sizeMiniBatch)
 	size_x = len(mini_batches[0][0][0])
 
@@ -305,18 +214,16 @@ if __name__ == '__main__':
 		size_y = 2
 		
 
-	MLPClassifier = MLPClass(ARGS.lowWeight, ARGS.highWeight, ARGS.neuronsOnHiddenLayer, size_x, size_y)
-	# print('len(mini_batches)')
-	# print((mini_batches[12]))	
+	MLPClassifier = MLPClass(ARGS.lowWeight, ARGS.highWeight, ARGS.neuronsOnHiddenLayer, size_x, size_y)	
 	w_middle = []
 	w_output = []
 	wb_middle= []
 	wb_output= []
-	
+	print('Training neural network...')
 	for epoch in range(ARGS.maxNumberOfIterations):		
 		nb = 0
 		for mb in mini_batches:
-			print('Numero Batch: ', nb)
+			# print('Numero Batch: ', nb)
 			if len(mb[0]) != 0:	# Checks that mini batch has data
 				x_mini = mb[0]
 				y_mini = mb[1]
@@ -337,19 +244,12 @@ if __name__ == '__main__':
 					strResult = 'Mid'
 				else:
 					strResult = 'Good'
-				y_pred.append(strResult)
-			# print('target_test[i]: ', target_test[i])
-			# y_net = numpy.where(condition[, x, y])			
+				y_pred.append(strResult)			
 			errorGlobal = errorGlobal + error
 
 		errorGlobal = errorGlobal / len(data_test)
-
-		if ARGS.dataset == 'wine':
-			print('old_target_test')
-			print((np.array(old_target_test)))
-			print('y_pred')
-			print((np.array(y_pred)))
-			# print(MultiClassConfusionMatrix())
-			print('Accuracy: ', accuracy_score(np.array(old_target_test),np.array(y_pred)))
-		else:		
-			print('errorGlobal on epoch: ', errorGlobal, epoch)
+		if (epoch + 1) % 50 == 0 or epoch == ARGS.maxNumberOfIterations - 1:
+			if ARGS.dataset == 'wine':										
+				print('Accuracy on epoch ' + str(epoch + 1) + ': ' + str(accuracy_score(np.array(old_target_test),np.array(y_pred))))
+			else:		
+				print('MSE on epoch ' + str(epoch + 1) +': ' + str(errorGlobal))
