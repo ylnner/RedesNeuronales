@@ -28,27 +28,17 @@ class MLPClass:
 		self.w_output  = w_output
 		self.wb_output = wb_output
 
-	def sigmoid(self, x):		
-		
-		return (1 /(1+ np.exp(-x)))
-		# if x < 0:
-		# 	return 1 - 1/(1 + np.exp(x))
-		# else:
-		# 	return 1 /(1+ np.exp(-x))
+	def sigmoid(self, x):
+		# return (1 /(1+ np.exp(-x)))				
+		out = []
+		for i in range(len(x)):
+			if x[i] < 0:
+				aux = 1 - 1/(1 + math.exp(x[i]))
+			else:
+				aux = 1/(1 + math.exp(-x[i]))
+			out.append(aux)
+		return np.array(out)	
 
-
-		# print('x: ', x)
-		# out = []
-		# for i in range(len(x)):
-		# 	aux = 1 / (1 + math.exp(-x[i]))			
-		# 	out.append(aux)
-		# return np.array(out)
-
-		# def sigmoid(gamma):
-  # if gamma < 0:
-  #   return 1 - 1/(1 + math.exp(gamma))
-  # else:
-  #   return 1/(1 + math.exp(-gamma))
 
 	def forward(self, x, y, w_middle, w_output, wb_middle, wb_output):
 		# Middle Layer
